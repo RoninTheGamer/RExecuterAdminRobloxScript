@@ -1,0 +1,150 @@
+require(6648681899)(script.Settings, script.Packages, script.Stylesheets)
+
+local module = {}
+
+module.Admins = {
+	--["7kayoh"] = "Owner",
+	-- [12312322] = "Moderator", -- user with User Id 12312322 will get Moderator,
+	-- ["Roblox"] = "Moderator", -- user with name Roblox will get Moderator
+	-- for more information such as group ranking, refer the documentation
+}
+
+module.Permissions = {
+	["Moderator"] = {
+		["Priority"] = 1,
+		["DisallowPrefixes"] = {
+			"All",
+			"Others"
+		},
+		["Permissions"] = {
+			"Kick",
+			"ChatLogs",
+			"JoinLogs",
+			"CheckBan",
+			"Message",
+			"HandTo",
+			"View",
+			"Unview"
+		}
+	},
+	["Admin"] = {
+		["Inherits"] = "Moderator",
+		["Priority"] = 2,
+		["Permissions"] = {
+			"Ban",
+			"Shutdown",
+			"TimeBan",
+			"Unban",
+			"SystemMessage",
+			"ServerLock"
+		}
+	},
+	["Owner"] = {
+		["Inherits"] = "Admin",
+		["Priority"] = 3,
+		["Permissions"] = {
+			"*"
+		}
+	}
+}
+
+module.UI = {
+	["Accent"] = Color3.fromRGB(64, 157, 130),
+	["Keybind"] = Enum.KeyCode.Semicolon,
+	["Theme"] = "Minimal Dark"
+}
+
+module.Misc = {
+	["DisableCredits"] = false
+	["AutoCreatorAdmin"] = true, -- when enabled, this automatically grants the game owner admin
+	["AutoCreatorAdminTo"] = "Owner" -- configure this if needed
+}
+
+return module
+
+
+local module = {
+	Name = "Fly",
+	Description = "Make a player fly",
+	Location = "Player",
+}
+
+module.Execute = function(Client, Type, Attachment)			
+	if Type == "command" then
+		local target = module.API.getPlayerWithName(Attachment)
+		local char = module.API.getCharacter(target)
+		if char then
+			local scr = script.Fly:Clone()
+			local sVal = Instance.new("NumberValue")
+			sVal.Name = 'Speed'
+			sVal.Value = 1.35
+			sVal.Parent = scr
+
+			local NoclipVal = Instance.new("BoolValue")
+			NoclipVal.Name = 'Noclip'
+			NoclipVal.Value = false
+			NoclipVal.Parent = scr
+
+			scr.Name = "COMMANDER_FLIGHT"
+
+			local part = char:FindFirstChild("HumanoidRootPart")
+			if part then
+				local oldp = part:FindFirstChild("COMMANDER_FLIGHT_POSITION")
+				local oldg = part:FindFirstChild("COMMANDER_FLIGHT_GYRO")
+				local olds = part:FindFirstChild("COMMANDER_FLIGHT")
+				if oldp then oldp:Destroy() end
+				if oldg then oldg:Destroy() end
+				if olds then olds:Destroy() end
+
+				local new = scr:Clone()
+				local flightPosition = Instance.new("BodyPosition")
+				local flightGyro = Instance.new("BodyGyro")
+
+				flightPosition.Name = "COMMANDER_FLIGHT_POSITION"
+				flightPosition.MaxForce = Vector3.new(0, 0, 0)
+				flightPosition.Position = part.Position
+				flightPosition.Parent = part
+
+				flightGyro.Name = "COMMANDER_FLIGHT_GYRO"
+				flightGyro.MaxTorque = Vector3.new(0, 0, 0)
+				flightGyro.CFrame = part.CFrame
+				flightGyro.Parent = part
+
+				new.Parent = part
+				new.Disabled = false
+
+				char.Humanoid.PlatformStand = true
+
+				module.Remotes.Event:FireClient(target, "newMessage", "", {From = "System", Content = "You are now flying. Press E to toggle flight."})
+			end
+		end
+	end
+end
+
+return module
+
+local module = {
+	Name = "UnFly",
+	Description = "Removes a player's ability to fly",
+	Location = "Player",
+}
+
+module.Execute = function(Client, Type, Attachment)			
+	if Type == "command" then
+		local char = module.API.getCharacter(module.API.getPlayerWithName(Attachment))
+		if char then
+			local part = char:FindFirstChild("HumanoidRootPart")
+			if part then
+				local oldp = part:FindFirstChild("COMMANDER_FLIGHT_POSITION")
+				local oldg = part:FindFirstChild("COMMANDER_FLIGHT_GYRO")
+				local olds = part:FindFirstChild("COMMANDER_FLIGHT")
+				if oldp then oldp:Destroy() end
+				if oldg then oldg:Destroy() end
+				if olds then olds:Destroy() end
+			end
+			char.Humanoid.PlatformStand = false
+		end
+	end
+end
+
+return module
